@@ -1016,8 +1016,6 @@ static void ckv_next_number_token(ckv_parse_t *ckv, ckv_token_t *token)
         ckv_set_token_error(token, ckv, "invalid number");
     else
         ckv->ptr = endptr;     /* Skip the processed number */
-
-    return;
 }
 
 
