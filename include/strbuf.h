@@ -1,3 +1,6 @@
+#ifndef STRBUF_H
+#define STRBUF_H
+
 /* strbuf - String buffer routines
  *
  * Copyright (c) 2010-2012  Mark Pulford <mark@kyne.com.au>
@@ -152,3 +155,4 @@ static inline char *strbuf_string(strbuf_t *s, int *len)
 
 /* vi:ai et sw=4 ts=4:
  */
+#endif

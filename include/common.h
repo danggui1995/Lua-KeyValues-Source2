@@ -1,3 +1,6 @@
+#ifndef COMMON_H
+#define COMMON_H
+
 #include <assert.h>
 #include <string.h>
 #include <math.h>
@@ -10,8 +13,8 @@
 
 #if __DEBUG_KV__
 #define strncasecmp _strnicmp
-#include "../lua/lua.h"
-#include "../lua/lauxlib.h"
+#include "../../lua/lua.h"
+#include "../../lua/lauxlib.h"
 #else
 #include <lua.h>
 #include <lauxlib.h>
@@ -76,3 +79,15 @@ static const char *char2escape[256] = {
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 };
+
+void printLuaStack(lua_State* l);
+
+#ifdef __DEBUG_KV__
+#define Print_Stack printLuaStack(l)
+#define LuaPrint(format, ...) printf(format, ##__VA_ARGS__); fflush(stdout);
+#else
+#define Print_Stack
+#define LuaPrint(format, ...) 
+#endif
+
+#endif

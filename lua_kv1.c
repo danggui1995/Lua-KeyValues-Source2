@@ -1,13 +1,5 @@
 #include "include/common.h"
 
-#ifndef CKV1_MODNAME
-#define CKV1_MODNAME   "ckv1"
-#endif
-
-#ifndef CKV1_VERSION
-#define CKV1_VERSION   "1.0.0"
-#endif
-
 typedef enum
 {
     LoadType_Map,
@@ -1393,6 +1385,7 @@ static int ckv1_decode(lua_State *l)
 
     ckv1.cfg = ckv1_fetch_config(l);
     ckv1.data = luaL_checklstring(l, 1, &ckv1_len);
+    lua_pop(l, 1);
     ckv1.current_depth = 0;
     ckv1.ptr = ckv1.data;
 
@@ -1466,6 +1459,7 @@ static int ckv1_decode_array(lua_State *l)
 
     ckv1.cfg = ckv1_fetch_config(l);
     ckv1.data = luaL_checklstring(l, 1, &ckv1_len);
+    lua_pop(l, 1);
     ckv1.current_depth = 0;
     ckv1.ptr = ckv1.data;
 

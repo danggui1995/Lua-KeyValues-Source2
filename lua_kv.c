@@ -1290,6 +1290,7 @@ static int ckv_decode(lua_State *l)
 
     ckv.cfg = ckv_fetch_config(l);
     ckv.data = luaL_checklstring(l, 1, &ckv_len);
+    lua_pop(l, 1);
     ckv.current_depth = 0;
     ckv.ptr = ckv.data;
     
@@ -1544,6 +1545,7 @@ static int ckv_decode2(lua_State *l)
 
     ckv.cfg = ckv_fetch_config(l);
     ckv.data = luaL_checklstring(l, 1, &ckv_len);
+    lua_pop(l, 1);
     ckv.current_depth = 0;
     ckv.ptr = ckv.data;
 
@@ -1587,6 +1589,7 @@ static int ckv_decode_file_array(lua_State *l)
     
     size_t filepath_len;
     const char *filepath = luaL_checklstring(l, 1, &filepath_len);
+    lua_pop(l, 1);
     lua_newtable(l);
     ckv_decode_file(l, filepath);
 

@@ -1,3 +1,6 @@
+#ifndef FPCONV_H
+#define FPCONV_H
+
 /* Lua CKV floating point conversion routines */
 
 /* Buffer required to store the largest string representation of a double.
@@ -20,3 +23,4 @@ extern double fpconv_strtod(const char*, char**);
 
 /* vi:ai et sw=4 ts=4:
  */
+#endif
