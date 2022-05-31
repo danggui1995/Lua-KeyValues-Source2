@@ -5,6 +5,8 @@
 set (CKV_SRC 
 lua_kv/lua_kv.c
 lua_kv/lua_kv1.c
+lua_kv/lua_kv3.c
+lua_kv/include/common.c
 lua_kv/include/fpconv.c
 lua_kv/include/strbuf.c
 )
@@ -42,6 +44,11 @@ ckv1.encode(tb) --字典
 ckv1.encode_array(tb) --数组
 ckv1.decode(tb) --字典
 ckv1.decode_array(tb) --数组
+
+--处理dmx模型
+local ckv3 = require('ckv3')
+ckv3.encode(tb)
+ckv3.decode(tb)
 ```
 
 这2种形式主要是数组可以存在多个key一样的

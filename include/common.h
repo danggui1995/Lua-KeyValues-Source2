@@ -9,7 +9,7 @@
 #include "strbuf.h"
 #include "fpconv.h"
 
-#define __DEBUG_KV__ 1
+#define __DEBUG_KV__ 0
 
 #if __DEBUG_KV__
 #define strncasecmp _strnicmp
