@@ -91,3 +91,10 @@ void printLuaStack(lua_State* l);
 #endif
 
 #endif
+
+#define MAX_TAB 64
+char* tabCache[MAX_TAB];
+
+void InitTabCache();
+
+#define APPEND_TAB_UNSAFE(buf, cnt) for(int tabx = 0; tabx < cnt; tabx++) strbuf_append_char_unsafe(buf, '\t');

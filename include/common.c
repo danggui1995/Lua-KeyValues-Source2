@@ -5,7 +5,7 @@ void printLuaStack(lua_State* l)
     int stackTop = lua_gettop(l);
     int nType;
 
-    printf("--start(v)(%d)--\n", stackTop);
+    printf("--start(%d)--\n", stackTop);
     //显示栈中的元素
     while (stackTop > 0)
     {
@@ -16,4 +16,23 @@ void printLuaStack(lua_State* l)
 
     printf("--stop--\n");
     fflush(stdout);
+}
+
+void InitTabCache()
+{
+    if (tabCache[0] != NULL)
+    {
+        return;
+    }
+    int i,j;
+    for(i = 0; i < MAX_TAB; i++)
+    {
+        char* buf = malloc(i + 1);
+        for(j = 0; j < i; j++)
+        {
+            buf[j] = '\t';
+        }
+        buf[j] = '\0';
+        tabCache[i] = buf;
+    }
 }

@@ -266,88 +266,126 @@ static void ckv3_check_encode_depth(lua_State *l, ckv3_config_t *cfg,
 }
 
 static void ckv3_append_data(lua_State *l, ckv3_config_t *cfg,
-                             int current_depth, strbuf_t *ckv3);
+                             int current_depth, strbuf_t *ckv3, int isObject);
 
-/* ckv3_append_array args:
- * - lua_State
- * - KV strbuf
- * - Size of passwd Lua array (top of stack) */
 static void ckv3_append_array(lua_State *l, ckv3_config_t *cfg, int current_depth,
-                              strbuf_t *ckv3, int array_length)
+                              strbuf_t *ckv3, int array_length, int isObject)
 {
-    strbuf_append_char(ckv3, '[');
-    
-    for (int i = 1; i <= array_length; i++) {
+    char sep = ',';
+    int i, j;
+    if (!isObject)
+    {
         strbuf_append_char(ckv3, '\n');
+        APPEND_TAB_UNSAFE(ckv3, current_depth);
+        strbuf_append_char(ckv3, '[');
+        strbuf_append_char(ckv3, '\n');
+    }
+    else
+    {
+        sep = ' ';
+    }
+    
+    for (i = 1; i <= array_length; i++) {
         lua_rawgeti(l, -1, i);
         
-        ckv3_append_data(l, cfg, current_depth, ckv3);
+        int stype = lua_type(l, -1);
+        //map[key] = {type, }
+        if (stype == LUA_TTABLE)
+        {
+            const int length2 = lua_rawlen(l, -1);
+            if (length2 > 0)
+            {
+                strbuf_append_char(ckv3, '\n');
+                APPEND_TAB_UNSAFE(ckv3, current_depth);
+                strbuf_append_char(ckv3, '[');
+                strbuf_append_char(ckv3, '\n');
+                for(j = 1; j <= length2; j++)
+                {  
+                    lua_rawgeti(l, -1, j);
+                    if (j == 1)
+                    {
+                        APPEND_TAB_UNSAFE(ckv3, current_depth + 1);
+                    }
+                    ckv3_append_data(l, cfg, current_depth + 1, ckv3, 1);
+                    if (j < length2)
+                    {
+                        strbuf_append_char(ckv3, ',');
+                    }
+                    lua_pop(l, 1);
+                }
+                strbuf_append_char(ckv3, '\n');
+                APPEND_TAB_UNSAFE(ckv3, current_depth);
+                strbuf_append_char(ckv3, ']');
+            }
+            else
+            {
+                ckv3_append_data(l, cfg, current_depth, ckv3, 0);
+            }
+        }
+        else
+        {
+            //普通数组 map[key] = {type, array}
+            ckv3_append_data(l, cfg, current_depth, ckv3, 0);
+        }
+       
         if (i < array_length)
         {
-            strbuf_append_char(ckv3, ',');
+            strbuf_append_char(ckv3, sep);
         }
         lua_pop(l, 1);
     }
 
-    strbuf_append_char(ckv3, '\n');
-    for (int j = 1; j < current_depth; j++)
+    if (!isObject)
     {
-        strbuf_append_char(ckv3, '\t');
+        strbuf_append_char(ckv3, '\n');
+        APPEND_TAB_UNSAFE(ckv3, current_depth);
+        strbuf_append_char(ckv3, ']');
     }
-    strbuf_append_char(ckv3, ']');
 }
 
 static void ckv3_append_object(lua_State *l, ckv3_config_t *cfg,
                                int current_depth, strbuf_t *ckv3)
 {
-    int w, it_idx = 0;
+    int w = 0;
     /* Object */
+    strbuf_append_char(ckv3, '\n');
+    APPEND_TAB_UNSAFE(ckv3, current_depth);
     strbuf_append_char(ckv3, '{');
-    current_depth++;
     lua_pushnil(l);
     /* table, startkey */
     while (lua_next(l, -2) != 0) {
         strbuf_append_char(ckv3, '\n');
         
-        for (w = 2; w < current_depth; w++)
-        {
-            strbuf_append_char(ckv3, '\t');
-        }
-        /* table, key, value */
-
+        APPEND_TAB_UNSAFE(ckv3, current_depth + 1);
         
         ckv3_append_string(l, ckv3, -2);
         strbuf_append_char(ckv3, ' ');
 
         const int array_length = lua_rawlen(l, -1);
-        ckv3_append_array(l, cfg, current_depth, ckv3, array_length);
+        ckv3_append_array(l, cfg, current_depth + 1, ckv3, array_length, 1);
         
         lua_pop(l, 1);
     }
     strbuf_append_char(ckv3, '\n');
-    for (w = 3; w < current_depth; w++)
-    {
-        strbuf_append_char(ckv3, '\t');
-    }
+    APPEND_TAB_UNSAFE(ckv3, current_depth);
     strbuf_append_char(ckv3, '}');
 }
 
 /* Serialise Lua data into KV string. */
 static void ckv3_append_data(lua_State *l, ckv3_config_t *cfg,
-                             int current_depth, strbuf_t *ckv3)
+                             int current_depth, strbuf_t *ckv3, int isObject)
 {
     switch (lua_type(l, -1)) {
     case LUA_TSTRING:
         ckv3_append_string(l, ckv3, -1);
         break;
     case LUA_TTABLE:
-        current_depth++;
         ckv3_check_encode_depth(l, cfg, current_depth, ckv3);
 
         const int array_length = lua_rawlen(l, -1);
         if (array_length > 0)
         {
-            ckv3_append_array(l, cfg, current_depth, ckv3, array_length);
+            ckv3_append_array(l, cfg, current_depth, ckv3, array_length, isObject);
         }
         else
         {
@@ -407,7 +445,7 @@ static int ckv3_encode(lua_State *l)
         }
 
         /* table, key, value */
-        ckv3_append_data(l, cfg, 0, encode_buf);
+        ckv3_append_data(l, cfg, 0, encode_buf, 1);
         lua_pop(l, 1);
         /* table, key */
     }
@@ -722,12 +760,12 @@ static void ckv3_parse_array_context(lua_State *l, ckv3_parse_t *ckv3)
         ckv3_process_value(l, ckv3, &token);
         
         // maybe pure array, maybe element_array
-        ckv3_next_token(ckv3, &token, 0);
+        ckv3_next_token(ckv3, &token);
         if (token.type == T_COMMA)
         {
             //是逗号 进下一个循环
             lua_rawseti(l, -2, i);
-            ckv3_next_token(ckv3, &token, 0);
+            ckv3_next_token(ckv3, &token);
             //兼容一下末尾是,]的情况
             if (token.type == T_ARR_END)
             {
@@ -760,11 +798,11 @@ static void ckv3_parse_array_context(lua_State *l, ckv3_parse_t *ckv3)
             lua_rawseti(l, -2, 2);
             
             lua_rawseti(l, -2, i);
-            ckv3_next_token(ckv3, &token, 0);
+            ckv3_next_token(ckv3, &token);
             if (token.type == T_COMMA)
             {
                 //是逗号，直接进入下一个循环
-                ckv3_next_token(ckv3, &token, 0);
+                ckv3_next_token(ckv3, &token);
                 //兼容一下末尾是,]的情况
                 if (token.type == T_ARR_END)
                 {
@@ -829,13 +867,13 @@ static int ckv3_decode(lua_State *l)
 
     lua_newtable(l);
     
-    ckv3_next_token(&ckv3, &token, 1);
+    ckv3_next_token(&ckv3, &token);
     if (token.type == T_STRING)
     {
         while (1) {
             parse_object_internal(l, &token, &ckv3);
             
-            ckv3_next_token(&ckv3, &token, 1);
+            ckv3_next_token(&ckv3, &token);
 
             if (token.type == T_END) {
                 break;
@@ -882,5 +920,6 @@ LUALIB_API int luaopen_ckv3(lua_State *l)
 #endif
 {
     lua_ckv3_new(l);
+    InitTabCache();
     return 1;
 }
